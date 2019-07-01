@@ -1,0 +1,73 @@
+##read Julia's blog talking about how to apply reorder_within and scale_x_reordered function of tidytext package in making ordered graphs by ggplot2.
+##Store it here for my future use. 
+##reorder categories when facetting with ggplot2##
+##see Julia's twitter and her blog https://twitter.com/juliasilge/status/1145602792079314944
+##https://juliasilge.com/blog/reorder-within/
+
+library(tidyverse)
+library(babynames)
+
+top_names <- babynames %>%
+    filter(year >= 1950,
+           year < 1990) %>%
+    mutate(decade = (year %/% 10) * 10) %>%   ##year %/%10*10 gives decades, eg. 1989%/%10*10 is 1980
+    group_by(decade) %>%
+    count(name, wt = n, sort = TRUE) %>%
+    ungroup
+
+top_names
+
+##name sorted and graphed by alphabetical order##
+top_names %>%
+    group_by(decade) %>%
+    top_n(15) %>%
+    ungroup %>%
+    mutate(decade = as.factor(decade)) %>%
+    ggplot(aes(name, n, fill = decade)) +
+    geom_col(show.legend = FALSE) +
+    facet_wrap(~decade, scales = "free_y") +
+    coord_flip() +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(y = "Number of babies per decade",
+         x = NULL,
+         title = "What were the most common baby names in each decade?",
+         subtitle = "Via US Social Security Administration")
+         
+##fct_reorder() like reorder in basic, will reorder all of these together##
+top_names %>%
+    group_by(decade) %>%
+    top_n(15) %>%
+    ungroup %>%
+    mutate(decade = as.factor(decade),
+           name = fct_reorder(name, n)) %>%
+    ggplot(aes(name, n, fill = decade)) +
+    geom_col(show.legend = FALSE) +
+    facet_wrap(~decade, scales = "free_y") +
+    coord_flip() +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(y = "Number of babies per decade",
+         x = NULL,
+         title = "What were the most common baby names in each decade?",
+         subtitle = "Via US Social Security Administration")
+         
+##reorder within a group##
+##reorder_within and scale_x_reordered() in package tidytext##
+
+library(tidytext)
+
+top_names %>%
+    group_by(decade) %>%
+    top_n(15) %>%
+    ungroup %>%
+    mutate(decade = as.factor(decade),
+           name = reorder_within(name, n, decade)) %>%
+    ggplot(aes(name, n, fill = decade)) +
+    geom_col(show.legend = FALSE) +
+    facet_wrap(~decade, scales = "free_y") +
+    coord_flip() +
+    scale_x_reordered() +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(y = "Number of babies per decade",
+         x = NULL,
+         title = "What were the most common baby names in each decade?",
+         subtitle = "Via US Social Security Administration")
