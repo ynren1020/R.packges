@@ -1,0 +1,45 @@
+##deldelCt relative expression##
+
+NEFH.ctrl<-c(31.898,32.140,31.989)
+NEFH.exp<-c(28.113,28.120,28.207)
+B2M.ctrl<-c(15.046,15.085,15.002)
+B2M.exp<-c(15.032,14.850,15.307)
+
+del.exp<-NEFH.exp-B2M.exp
+del.ctrl<-NEFH.ctrl-B2M.ctrl
+
+del.del.expvsctrl<-del.exp-del.ctrl
+
+ctrl.fc<-2^abs((del.ctrl-mean(del.ctrl)))
+exp.fc<-2^abs((del.exp-mean(del.ctrl)))
+
+lncap<-rep(c("Empty Vector","NEFH cDNA"),each =3)
+fc<-c(ctrl.fc,exp.fc)
+df<-data.frame(lncap=lncap,fc=fc)
+
+p <- ggbarplot(df, x = "lncap", y = "fc",
+               color = "lncap", palette =c("#00AFBB", "#FC4E07"),
+               fill = "lncap",
+               add = c("mean_se"),
+               width = 0.3,
+               xlab="LNCaP cells",
+               ylab="Relative NEFH expression\n over control")
+p1<-p + stat_compare_means(method="t.test",
+                           ref.group = "Empty Vector", 
+                           label = "p.format",
+                           method.args = list(alternative = "great"),
+                           label.y = 20,
+                           label.x.npc = "center",
+                           size = 8)
+
+p2<-p1+theme(axis.text.x = element_text(color = "grey20", size = 17, angle = 0, hjust = .5, vjust = .5, face = "bold"),
+             axis.text.y = element_text(color = "grey20", size = 17, angle = 0, hjust = 1, vjust = 0, face = "bold"),  
+             axis.title.x = element_text(color = "grey20", size = 22, angle = 0, hjust = .5, vjust = 0, face = "bold"),
+             axis.title.y = element_text(color = "grey20", size = 22, angle = 90, hjust = .5, vjust = .5, face = "bold"))
+
+ggsave("LNCaP.NEFH.expression.bar.pdf",width=8,height=8,dpi = 300) 
+
+
+
+
+
