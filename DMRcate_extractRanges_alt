@@ -1,0 +1,32 @@
+# Objective: an alternative way to use extractRange in DMRcate package to annotate DMRs 
+# Problem: An error message like Error in UseMethod("filter_") occured when I tried to run extractRange in DMRcate package, the problem arises because of incompatible dplyr upgraded version verseu ExperimentalHub.
+# The source code of extractRange "eh = ExperimentHub()" does not work, so I have to find another way to generate hg19.generanges for annotation
+# installed DMRcatedata package, but did not find data set hg19.generanges
+# Use make-Data.R in DMRcatedata to generate, load packages and then run code related to hg19.
+# save it for future use
+# Save a single object to a file
+saveRDS(hg19.generanges, "hg19.generanges.rds")
+# Restore it under a different name
+hg19.generanges <- readRDS("hg19.generanges.rds")
+
+# DMR output saved in coords ---
+coords <- extractCoords(dmrcoutput@coord)
+coords <- cbind(coords, dmrcoutput@no.cpgs, dmrcoutput@min_smoothed_fdr, dmrcoutput@Stouffer, 
+                dmrcoutput@HMFDR, dmrcoutput@Fisher, dmrcoutput@maxdiff, dmrcoutput@meandiff)
+coords$chromStart <- as.integer(as.character(coords$chromStart))
+coords$chromEnd <- as.integer(as.character(coords$chromEnd))
+
+# annotate coords ---
+ranges <- makeGRangesFromDataFrame(coords, keep.extra.columns = TRUE)
+genesidx <- as.data.frame(findOverlaps(ranges, hg19.generanges))
+
+genesover <- tapply(genesidx$subjectHits, genesidx$queryHits, function(x) hg19.generanges$symbol[x])
+op.A <- sapply(genesover, function(l) paste(l, collapse= ", "))
+name.A <- names(genesover)
+m.A <- as.numeric(name.A)
+M <- length(ranges)
+overlapping.genes <- rep(NA_character_, M)
+overlapping.genes[m.A] <- op.A
+ranges$overlapping.genes <- overlapping.genes
+colnames(values(ranges)) <- sub("dmrcoutput@", "", colnames(values(ranges)))
+as.data.frame(ranges)
